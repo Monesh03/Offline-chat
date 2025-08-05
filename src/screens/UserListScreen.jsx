@@ -1,8 +1,13 @@
-// src/screens/UserListScreen.jsx
 import React, { useEffect, useState } from 'react';
 import {
-  Box, TextField, Typography, Button, Snackbar, Paper
+  Box, TextField, Typography, Button, Snackbar, Paper, Avatar,
+  IconButton, Divider, Badge, Fab, Dialog, DialogTitle, DialogContent,
+  DialogActions, InputAdornment
 } from '@mui/material';
+import { 
+  Add, Search, Group, Person, Delete, PersonAdd, 
+  Circle, Settings, Menu as MenuIcon 
+} from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 
@@ -22,6 +27,8 @@ const UserListScreen = () => {
   const [filteredContacts, setFilteredContacts] = useState([]);
   const [groups, setGroups] = useState([]);
   const [newGroupName, setNewGroupName] = useState('');
+  const [addContactOpen, setAddContactOpen] = useState(false);
+  const [createGroupOpen, setCreateGroupOpen] = useState(false);
 
   const navigate = useNavigate();
 
@@ -67,17 +74,15 @@ const UserListScreen = () => {
   };
 
   const fetchGroups = async (user) => {
-  try {
-    const res = await fetch(`${BASE_URL}/groups/${user}`);
-    const data = await res.json();
-    console.log('Fetched groups:', data); // ✅ inspect the response
-    setGroups(data);
-  } catch (err) {
-    console.error('Error fetching groups:', err);
-    setGroups([]); // fallback to avoid .map crash
-  }
-};
-
+    try {
+      const res = await fetch(`${BASE_URL}/groups/${user}`);
+      const data = await res.json();
+      setGroups(data);
+    } catch (err) {
+      console.error('Error fetching groups:', err);
+      setGroups([]);
+    }
+  };
 
   const fetchUnknownSenders = async (user) => {
     try {
@@ -105,8 +110,8 @@ const UserListScreen = () => {
     }
   };
 
- const handleAddContact = async (customContact = null, customName = null, e = null) => {
-  if (e && e.preventDefault) e.preventDefault(); // optional safety
+  const handleAddContact = async (customContact = null, customName = null, e = null) => {
+    if (e && e.preventDefault) e.preventDefault();
     const contactToAdd = customContact || emailInput.trim();
     const nameToAdd = customName || contactName.trim();
 
@@ -136,6 +141,7 @@ const UserListScreen = () => {
         setSnackbarVisible(true);
         setEmailInput('');
         setContactName('');
+        setAddContactOpen(false);
         fetchContacts(currentUser);
         fetchUnknownSenders(currentUser);
       } else {
@@ -152,10 +158,7 @@ const UserListScreen = () => {
   const handleAddFromUnknownUser = (contact) => {
     setEmailInput(contact);
     setContactName('');
-    const addForm = document.getElementById('add-contact-form');
-    if (addForm) {
-      addForm.scrollIntoView({ behavior: 'smooth' });
-    }
+    setAddContactOpen(true);
   };
 
   useEffect(() => {
@@ -207,8 +210,7 @@ const UserListScreen = () => {
   };
 
   const navigateToGroup = (group) => {
-   navigate('/groupchat', { state: { group } }); // ✅ send full group object
-
+    navigate('/groupchat', { state: { group } });
   };
 
   const handleCreateGroup = async () => {
@@ -227,6 +229,7 @@ const UserListScreen = () => {
       if (data.success) {
         setSnackbarMessage('Group created!');
         setNewGroupName('');
+        setCreateGroupOpen(false);
         fetchGroups(currentUser);
       } else {
         setSnackbarMessage(data.message || 'Failed to create group');
@@ -238,209 +241,522 @@ const UserListScreen = () => {
     }
   };
 
- return (
-  <Box
-    sx={{
-      px: { xs: 2, sm: 4 },
-      py: 3,
-      maxWidth:1600,
-      mx: 'auto',
-      bgcolor: '#ece5dd',
-      minHeight: '100vh',
-      borderRadius: 2,
-      boxShadow: 5,
-    }}
+  const getInitials = (name) => {
+    return name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?';
+  };
+
+  return (
+    <Box
+      sx={{
+        height: '100vh',
+        background: '#17212b',
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
     >
-  <Box
-    sx={{
-      px: { xs: 2, sm: 4 },
-      py: 3,
-      maxWidth:1200,
-      mx: 'auto',
-      bgcolor: '#ece5dd',
-      minHeight: '100vh',
-    }}
-  >
-    <Typography variant="h5" fontWeight="bold" color="primary" gutterBottom>
-      Add New Contact
-    </Typography>
-
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mb: 3 }}>
-      <TextField
-        label="Name"
-        value={contactName}
-        onChange={(e) => setContactName(e.target.value)}
-        size="small"
-        sx={{ bgcolor: '#fff', borderRadius: 1 }}
-      />
-      <Box sx={{ display: 'flex', gap: 1 }}>
-        <TextField
-          label="Email or Phone"
-          value={emailInput}
-          onChange={(e) => setEmailInput(e.target.value)}
-          fullWidth
-          size="small"
-          sx={{ bgcolor: '#fff', borderRadius: 1 }}
-        />
-        <Button
-          variant="contained"
-          onClick={() => handleAddContact()}
-          sx={{ bgcolor: '#25D366', '&:hover': { bgcolor: '#1EBE5D' }, px: 3 }}
-        >
-          Add
-        </Button>
-      </Box>
-    </Box>
-
-    {/* Contacts Section */}
-    <Typography variant="h6" fontWeight="bold" mb={1}>
-      My Contacts
-    </Typography>
-    <TextField
-      label="Search Contacts"
-      value={searchText}
-      onChange={(e) => handleSearch(e.target.value)}
-      fullWidth
-      size="small"
-      sx={{ mb: 1.5, bgcolor: '#fff', borderRadius: 1 }}
-    />
-
-    <Box sx={{ maxHeight: 180, overflowY: 'auto', mb: 3 }}>
-      {filteredContacts.map((item) => (
-        <Paper
-          key={item.contact}
-          elevation={1}
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            p: 1.5,
-            mb: 1,
-            borderRadius: 2,
-            bgcolor: '#fff',
-          }}
-        >
-          <Box onClick={() => navigateToChat(item)} sx={{ cursor: 'pointer' }}>
-            <Typography>{item.name || item.contact}</Typography>
-          </Box>
-          <Typography sx={{ color: onlineUsers.includes(item.contact) ? 'green' : 'gray' }}>
-            {onlineUsers.includes(item.contact) ? 'Online' : 'Offline'}
-          </Typography>
-          <Button
-            onClick={() => handleDeleteContact(item.contact)}
-            color="error"
-            size="small"
-            sx={{ fontWeight: 'bold' }}
-          >
-            Remove
-          </Button>
-        </Paper>
-      ))}
-    </Box>
-
-    {/* Unknown Users */}
-    <Typography variant="h6" fontWeight="bold" mb={1}>
-      Messages from Unknown Users
-    </Typography>
-    <Box sx={{ maxHeight: 160, overflowY: 'auto', mb: 3 }}>
-      {unknownSenders.map((item) => (
-        <Paper
-          key={item}
-          elevation={1}
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            p: 1.5,
-            mb: 1,
-            borderRadius: 2,
-            bgcolor: '#fff',
-          }}
-        >
-          <Box onClick={() => navigateToChat(item)} sx={{ cursor: 'pointer' }}>
-            <Typography>{item}</Typography>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              onClick={() => handleAddFromUnknownUser(item)}
-              color="success"
-              variant="outlined"
-              size="small"
-            >
-              Add
-            </Button>
-            <Button
-              onClick={() => handleDeleteUnknownSender(item)}
-              color="error"
-              variant="outlined"
-              size="small"
-            >
-              Delete
-            </Button>
-          </Box>
-        </Paper>
-      ))}
-    </Box>
-
-    {/* Groups Section */}
-    <Typography variant="h6" fontWeight="bold" mb={1}>
-      Groups
-    </Typography>
-    <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-      <TextField
-        label="Group Name"
-        value={newGroupName}
-        onChange={(e) => setNewGroupName(e.target.value)}
-        fullWidth
-        size="small"
-        sx={{ bgcolor: '#fff', borderRadius: 1 }}
-      />
-      <Button
-        variant="contained"
-        onClick={handleCreateGroup}
-        sx={{ bgcolor: '#25D366', '&:hover': { bgcolor: '#1EBE5D' }, px: 3 }}
+      {/* Header */}
+      <Box
+        sx={{
+          background: '#242f3d',
+          borderBottom: '1px solid #0f1419',
+          p: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
       >
-        Create
-      </Button>
-    </Box>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <IconButton sx={{ color: '#8596a8', mr: 1 }}>
+            <MenuIcon />
+          </IconButton>
+          <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 500 }}>
+            Telegram
+          </Typography>
+        </Box>
+        <IconButton sx={{ color: '#8596a8' }}>
+          <Settings />
+        </IconButton>
+      </Box>
 
-    <Box sx={{ maxHeight: 160, overflowY: 'auto' }}>
-      {Array.isArray(groups) &&
-        groups.map((group) => (
-          <Paper
-            key={group.id}
-            elevation={1}
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              p: 1.5,
-              mb: 1,
-              borderRadius: 2,
-              bgcolor: '#fff',
-            }}
-          >
-            <Box onClick={() => navigateToGroup(group)} sx={{ cursor: 'pointer' }}>
-              <Typography fontWeight="medium">{group.name}</Typography>
-              <Typography variant="caption" color="textSecondary">
-                Admin: {group.admin}
+      {/* Search */}
+      <Box sx={{ p: 2, background: '#242f3d', borderBottom: '1px solid #0f1419' }}>
+        <TextField
+          placeholder="Search"
+          value={searchText}
+          onChange={(e) => handleSearch(e.target.value)}
+          fullWidth
+          variant="outlined"
+          size="small"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <Search sx={{ color: '#8596a8' }} />
+              </InputAdornment>
+            ),
+          }}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              backgroundColor: '#17212b',
+              borderRadius: 3,
+              color: '#ffffff',
+              '& fieldset': {
+                borderColor: 'transparent',
+              },
+              '&:hover fieldset': {
+                borderColor: '#40a7e3',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: '#40a7e3',
+              },
+            },
+            '& .MuiInputBase-input::placeholder': {
+              color: '#8596a8',
+              opacity: 1,
+            },
+          }}
+        />
+      </Box>
+
+      {/* Content */}
+      <Box sx={{ flex: 1, overflow: 'auto' }}>
+        {/* Groups Section */}
+        {groups.length > 0 && (
+          <>
+            <Box sx={{ p: 2, pb: 1 }}>
+              <Typography variant="subtitle2" sx={{ color: '#8596a8', fontWeight: 500 }}>
+                GROUPS
               </Typography>
             </Box>
-          </Paper>
-        ))}
+            {Array.isArray(groups) &&
+              groups.map((group) => (
+                <Box
+                  key={group.id}
+                  onClick={() => navigateToGroup(group)}
+                  className="hover-bg"
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    p: 2,
+                    cursor: 'pointer',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                  }}
+                >
+                  <Avatar
+                    sx={{
+                      width: 50,
+                      height: 50,
+                      mr: 2,
+                      background: 'linear-gradient(135deg, #40a7e3, #0088cc)',
+                      fontSize: '18px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    <Group />
+                  </Avatar>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        color: '#ffffff',
+                        fontWeight: 500,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {group.name}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: '#8596a8',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Admin: {group.admin}
+                    </Typography>
+                  </Box>
+                </Box>
+              ))}
+            <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.05)', my: 1 }} />
+          </>
+        )}
+
+        {/* Contacts Section */}
+        {filteredContacts.length > 0 && (
+          <>
+            <Box sx={{ p: 2, pb: 1 }}>
+              <Typography variant="subtitle2" sx={{ color: '#8596a8', fontWeight: 500 }}>
+                CONTACTS
+              </Typography>
+            </Box>
+            {filteredContacts.map((item) => (
+              <Box
+                key={item.contact}
+                onClick={() => navigateToChat(item)}
+                className="hover-bg"
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  p: 2,
+                  cursor: 'pointer',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                }}
+              >
+                <Badge
+                  overlap="circular"
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                  badgeContent={
+                    onlineUsers.includes(item.contact) ? (
+                      <Circle sx={{ color: '#4caf50', fontSize: 12 }} />
+                    ) : null
+                  }
+                >
+                  <Avatar
+                    sx={{
+                      width: 50,
+                      height: 50,
+                      mr: 2,
+                      background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                      fontSize: '18px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {getInitials(item.name)}
+                  </Avatar>
+                </Badge>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      color: '#ffffff',
+                      fontWeight: 500,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {item.name || item.contact}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: onlineUsers.includes(item.contact) ? '#4caf50' : '#8596a8',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {onlineUsers.includes(item.contact) ? 'online' : 'last seen recently'}
+                  </Typography>
+                </Box>
+                <IconButton
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteContact(item.contact);
+                  }}
+                  sx={{ color: '#8596a8', opacity: 0.7 }}
+                >
+                  <Delete fontSize="small" />
+                </IconButton>
+              </Box>
+            ))}
+          </>
+        )}
+
+        {/* Unknown Senders */}
+        {unknownSenders.length > 0 && (
+          <>
+            <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.05)', my: 1 }} />
+            <Box sx={{ p: 2, pb: 1 }}>
+              <Typography variant="subtitle2" sx={{ color: '#8596a8', fontWeight: 500 }}>
+                UNKNOWN CONTACTS
+              </Typography>
+            </Box>
+            {unknownSenders.map((item) => (
+              <Box
+                key={item}
+                onClick={() => navigateToChat(item)}
+                className="hover-bg"
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  p: 2,
+                  cursor: 'pointer',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                }}
+              >
+                <Avatar
+                  sx={{
+                    width: 50,
+                    height: 50,
+                    mr: 2,
+                    background: '#8596a8',
+                    fontSize: '18px',
+                    fontWeight: 600,
+                  }}
+                >
+                  {getInitials(item)}
+                </Avatar>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      color: '#ffffff',
+                      fontWeight: 500,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {item}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: '#8596a8',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    Unknown contact
+                  </Typography>
+                </Box>
+                <Box sx={{ display: 'flex', gap: 1 }}>
+                  <IconButton
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleAddFromUnknownUser(item);
+                    }}
+                    sx={{ color: '#4caf50', opacity: 0.8 }}
+                  >
+                    <PersonAdd fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteUnknownSender(item);
+                    }}
+                    sx={{ color: '#f44336', opacity: 0.8 }}
+                  >
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </Box>
+              </Box>
+            ))}
+          </>
+        )}
+      </Box>
+
+      {/* Floating Action Buttons */}
+      <Box sx={{ position: 'fixed', bottom: 20, right: 20, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Fab
+          size="medium"
+          onClick={() => setCreateGroupOpen(true)}
+          sx={{
+            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+            color: 'white',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #764ba2, #667eea)',
+            },
+          }}
+        >
+          <Group />
+        </Fab>
+        <Fab
+          onClick={() => setAddContactOpen(true)}
+          sx={{
+            background: 'linear-gradient(135deg, #40a7e3, #0088cc)',
+            color: 'white',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #0088cc, #40a7e3)',
+            },
+          }}
+        >
+          <Add />
+        </Fab>
+      </Box>
+
+      {/* Add Contact Dialog */}
+      <Dialog 
+        open={addContactOpen} 
+        onClose={() => setAddContactOpen(false)}
+        PaperProps={{
+          sx: {
+            background: '#242f3d',
+            color: '#ffffff',
+            borderRadius: 3,
+            minWidth: 400,
+          }
+        }}
+      >
+        <DialogTitle sx={{ color: '#ffffff', fontWeight: 600 }}>
+          Add New Contact
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Name"
+            fullWidth
+            variant="outlined"
+            value={contactName}
+            onChange={(e) => setContactName(e.target.value)}
+            sx={{
+              mb: 2,
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: '#17212b',
+                color: '#ffffff',
+                '& fieldset': {
+                  borderColor: '#8596a8',
+                },
+                '&:hover fieldset': {
+                  borderColor: '#40a7e3',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#40a7e3',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: '#8596a8',
+              },
+            }}
+          />
+          <TextField
+            margin="dense"
+            label="Email or Phone"
+            fullWidth
+            variant="outlined"
+            value={emailInput}
+            onChange={(e) => setEmailInput(e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: '#17212b',
+                color: '#ffffff',
+                '& fieldset': {
+                  borderColor: '#8596a8',
+                },
+                '&:hover fieldset': {
+                  borderColor: '#40a7e3',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#40a7e3',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: '#8596a8',
+              },
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 3 }}>
+          <Button 
+            onClick={() => setAddContactOpen(false)}
+            sx={{ color: '#8596a8' }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={() => handleAddContact()}
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(135deg, #40a7e3, #0088cc)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #0088cc, #40a7e3)',
+              },
+            }}
+          >
+            Add Contact
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Create Group Dialog */}
+      <Dialog 
+        open={createGroupOpen} 
+        onClose={() => setCreateGroupOpen(false)}
+        PaperProps={{
+          sx: {
+            background: '#242f3d',
+            color: '#ffffff',
+            borderRadius: 3,
+            minWidth: 400,
+          }
+        }}
+      >
+        <DialogTitle sx={{ color: '#ffffff', fontWeight: 600 }}>
+          Create New Group
+        </DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Group Name"
+            fullWidth
+            variant="outlined"
+            value={newGroupName}
+            onChange={(e) => setNewGroupName(e.target.value)}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                backgroundColor: '#17212b',
+                color: '#ffffff',
+                '& fieldset': {
+                  borderColor: '#8596a8',
+                },
+                '&:hover fieldset': {
+                  borderColor: '#40a7e3',
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: '#40a7e3',
+                },
+              },
+              '& .MuiInputLabel-root': {
+                color: '#8596a8',
+              },
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 3 }}>
+          <Button 
+            onClick={() => setCreateGroupOpen(false)}
+            sx={{ color: '#8596a8' }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleCreateGroup}
+            variant="contained"
+            sx={{
+              background: 'linear-gradient(135deg, #667eea, #764ba2)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #764ba2, #667eea)',
+              },
+            }}
+          >
+            Create Group
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Snackbar */}
+      <Snackbar
+        open={snackbarVisible}
+        onClose={() => setSnackbarVisible(false)}
+        autoHideDuration={3000}
+        message={snackbarMessage}
+        sx={{
+          '& .MuiSnackbarContent-root': {
+            backgroundColor: '#242f3d',
+            color: '#ffffff',
+          },
+        }}
+      />
     </Box>
-
-    {/* Snackbar */}
-    <Snackbar
-      open={snackbarVisible}
-      onClose={() => setSnackbarVisible(false)}
-      autoHideDuration={3000}
-      message={snackbarMessage}
-    />
-  </Box>
-</Box>
-);
-
-}
+  );
+};
 
 export default UserListScreen;
