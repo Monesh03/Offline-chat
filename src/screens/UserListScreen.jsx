@@ -267,16 +267,12 @@ const UserListScreen = () => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <IconButton sx={{ color: '#8596a8', mr: 1 }}>
-            <MenuIcon />
-          </IconButton>
+        
           <Typography variant="h6" sx={{ color: '#ffffff', fontWeight: 500 }}>
-            Telegram
+            Messager
           </Typography>
         </Box>
-        <IconButton sx={{ color: '#8596a8' }}>
-          <Settings />
-        </IconButton>
+       
       </Box>
 
       {/* Search */}
@@ -553,7 +549,7 @@ const UserListScreen = () => {
       </Box>
 
       {/* Floating Action Buttons */}
-      <Box sx={{ position: 'fixed', bottom: 20, right: 20, display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Box sx={{ position: 'fixed', top: 20, right: 20, display: 'flex', flexDirection: 'column', gap: 1 }}>
         <Fab
           size="medium"
           onClick={() => setCreateGroupOpen(true)}
