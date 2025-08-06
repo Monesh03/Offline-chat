@@ -1,7 +1,7 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   Box, Typography, IconButton, TextField, Dialog, DialogTitle,
-  DialogContent, Menu, MenuItem, DialogActions,
+  DialogContent, DialogContentText, Menu, MenuItem, DialogActions,
   Button, InputLabel, Select, FormControl, Avatar, Badge,
   InputAdornment, Fab
 } from '@mui/material';
@@ -97,7 +97,7 @@ const GroupChatScreen = () => {
     fetchMessages();
     fetchMembers();
     fetchContacts();
-  }, [group, fetchMessages, fetchMembers, fetchContacts]);
+  }, [group]);
 
   useEffect(() => {
     socket.on('receiveGroupMessage', (msg) => {
@@ -132,7 +132,7 @@ const GroupChatScreen = () => {
     return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')} ${time}`;
   };
 
-  const fetchMessages = useCallback(async () => {
+  const fetchMessages = async () => {
     try {
       const res = await fetch(`${BASE_URL}/group-messages/${group.id}`);
       const data = await res.json();
@@ -157,9 +157,9 @@ const GroupChatScreen = () => {
     } catch (err) {
       console.error('Error in fetchMessages:', err);
     }
-  }, [group.id, decryptMessage, setMessages, scrollToBottom]);
+  };
 
-  const fetchMembers = useCallback(async () => {
+  const fetchMembers = async () => {
     try {
       const res = await fetch(`${BASE_URL}/group-info/${group.id}`);
       const data = await res.json();
@@ -170,9 +170,9 @@ const GroupChatScreen = () => {
     } catch (err) {
       console.error('Error in fetchMembers:', err);
     }
-  }, [group.id, setMembers]);
+  };
 
-  const fetchContacts = useCallback(async () => {
+  const fetchContacts = async () => {
     try {
       const res = await fetch(`${BASE_URL}/contacts/${currentUser}`);
       const data = await res.json();
@@ -181,7 +181,7 @@ const GroupChatScreen = () => {
     } catch (err) {
       console.error('Error in fetchContacts:', err);
     }
-  }, [currentUser, setContacts]);
+  };
 
   const handleAddMember = async () => {
     if (!selectedMember) {

@@ -100,49 +100,6 @@ const PrivateChatScreen = () => {
           setCurrentUser(identifier);
           socket.emit('registerUser', identifier);
           if (to) {
-            const fetchMessages = async (fromUser, toUser) => {
-              try {
-                const res = await fetch(`${BASE_URL}/messages`);
-                const data = await res.json();
-
-                const filtered = (Array.isArray(data) ? data : []).filter(
-                  conv =>
-                    (conv.sender === fromUser && conv.receiver === toUser) ||
-                    (conv.sender === toUser && conv.receiver === fromUser)
-                );
-
-                const fifteenDaysAgo = new Date();
-                fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
-
-                const allMessages = [];
-                filtered.forEach(conv => {
-                  (conv.conversation || []).forEach(msg => {
-                    const msgDate = new Date(msg.timestamp);
-                    if (msgDate >= fifteenDaysAgo) {
-                      const decrypted = msg.text ? decryptMessage(msg.text) : '';
-                      allMessages.push({ ...msg, to: toUser, text: decrypted });
-                    }
-                  });
-                });
-
-                setMessages(allMessages);
-                scrollToBottom();
-              } catch (err) {
-                console.error(err);
-              }
-            };
-
-            const fetchContactName = async (owner, contact) => {
-              try {
-                const res = await fetch(`${BASE_URL}/contacts/${owner}`);
-                const contacts = await res.json();
-                const match = contacts.find(c => c.contact === contact);
-                if (match?.name) setContactName(match.name);
-              } catch (err) {
-                console.error(err);
-              }
-            };
-
             fetchMessages(identifier, to);
             fetchContactName(identifier, to);
           }
@@ -151,7 +108,7 @@ const PrivateChatScreen = () => {
         console.error('Invalid user object in localStorage', err);
       }
     }
-  }, [to, decryptMessage, scrollToBottom]);
+  }, [to]);
 
   useEffect(() => {
     const receive = (msg) => {
@@ -176,6 +133,49 @@ const PrivateChatScreen = () => {
       socket.off('onlineUsers');
     };
   }, [currentUser, to]);
+
+  const fetchMessages = async (fromUser, toUser) => {
+    try {
+      const res = await fetch(`${BASE_URL}/messages`);
+      const data = await res.json();
+
+      const filtered = (Array.isArray(data) ? data : []).filter(
+        conv =>
+          (conv.sender === fromUser && conv.receiver === toUser) ||
+          (conv.sender === toUser && conv.receiver === fromUser)
+      );
+
+      const fifteenDaysAgo = new Date();
+      fifteenDaysAgo.setDate(fifteenDaysAgo.getDate() - 15);
+
+      const allMessages = [];
+      filtered.forEach(conv => {
+        (conv.conversation || []).forEach(msg => {
+          const msgDate = new Date(msg.timestamp);
+          if (msgDate >= fifteenDaysAgo) {
+            const decrypted = msg.text ? decryptMessage(msg.text) : '';
+            allMessages.push({ ...msg, to: toUser, text: decrypted });
+          }
+        });
+      });
+
+      setMessages(allMessages);
+      scrollToBottom();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const fetchContactName = async (owner, contact) => {
+    try {
+      const res = await fetch(`${BASE_URL}/contacts/${owner}`);
+      const contacts = await res.json();
+      const match = contacts.find(c => c.contact === contact);
+      if (match?.name) setContactName(match.name);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const scrollToBottom = () => {
     setTimeout(() => {
