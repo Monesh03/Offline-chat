@@ -457,7 +457,7 @@ const UserListScreen = () => {
                     </Typography>
                   </Box>
                 </Box>
-              ))}
+              ))
             )}
           </>
         )}
