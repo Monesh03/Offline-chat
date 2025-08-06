@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, TextField, Typography, Button, Snackbar, Paper, Avatar,
   IconButton, Divider, Badge, Fab, Dialog, DialogTitle, DialogContent,
-  DialogActions, InputAdornment
+  DialogActions, InputAdornment, Tabs, Tab
 } from '@mui/material';
 import { 
   Add, Search, Group, Person, Delete, PersonAdd, 
@@ -25,10 +25,13 @@ const UserListScreen = () => {
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [searchText, setSearchText] = useState('');
   const [filteredContacts, setFilteredContacts] = useState([]);
+  const [filteredGroups, setFilteredGroups] = useState([]);
+  const [filteredUnknownSenders, setFilteredUnknownSenders] = useState([]);
   const [groups, setGroups] = useState([]);
   const [newGroupName, setNewGroupName] = useState('');
   const [addContactOpen, setAddContactOpen] = useState(false);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState(0); // 0: Groups, 1: Contacts, 2: Unknown Contacts
 
   const navigate = useNavigate();
 
@@ -163,14 +166,42 @@ const UserListScreen = () => {
 
   useEffect(() => {
     setFilteredContacts(contacts);
-  }, [contacts]);
+    setFilteredGroups(groups);
+    setFilteredUnknownSenders(unknownSenders);
+  }, [contacts, groups, unknownSenders]);
 
   const handleSearch = (text) => {
     setSearchText(text);
-    const filtered = contacts.filter(contact =>
-      contact.name.toLowerCase().includes(text.toLowerCase())
-    );
-    setFilteredContacts(filtered);
+    
+    // Filter based on active tab
+    if (activeTab === 0) {
+      // Filter groups
+      const filtered = groups.filter(group =>
+        group.name.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredGroups(filtered);
+    } else if (activeTab === 1) {
+      // Filter contacts
+      const filtered = contacts.filter(contact =>
+        contact.name.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredContacts(filtered);
+    } else if (activeTab === 2) {
+      // Filter unknown senders
+      const filtered = unknownSenders.filter(sender =>
+        sender.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredUnknownSenders(filtered);
+    }
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setActiveTab(newValue);
+    setSearchText(''); // Clear search when switching tabs
+    // Reset all filters
+    setFilteredContacts(contacts);
+    setFilteredGroups(groups);
+    setFilteredUnknownSenders(unknownSenders);
   };
 
   const handleDeleteUnknownSender = async (sender) => {
@@ -278,7 +309,7 @@ const UserListScreen = () => {
       {/* Search */}
       <Box sx={{ p: 2, background: '#242f3d', borderBottom: '1px solid #0f1419' }}>
         <TextField
-          placeholder="Search"
+          placeholder={`Search ${activeTab === 0 ? 'groups' : activeTab === 1 ? 'contacts' : 'unknown contacts'}...`}
           value={searchText}
           onChange={(e) => handleSearch(e.target.value)}
           fullWidth
@@ -314,18 +345,68 @@ const UserListScreen = () => {
         />
       </Box>
 
+      {/* Tabs Navigation */}
+      <Box sx={{ background: '#242f3d', borderBottom: '1px solid #0f1419' }}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          variant="fullWidth"
+          sx={{
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#40a7e3',
+              height: 3,
+            },
+            '& .MuiTab-root': {
+              color: '#8596a8',
+              fontWeight: 500,
+              fontSize: '14px',
+              textTransform: 'none',
+              minHeight: 48,
+              '&.Mui-selected': {
+                color: '#40a7e3',
+              },
+              '&:hover': {
+                color: '#ffffff',
+                backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              },
+            },
+          }}
+        >
+          <Tab 
+            label={`Groups (${groups.length})`} 
+            icon={<Group sx={{ fontSize: 18 }} />}
+            iconPosition="start"
+          />
+          <Tab 
+            label={`Contacts (${contacts.length})`} 
+            icon={<Person sx={{ fontSize: 18 }} />}
+            iconPosition="start"
+          />
+          <Tab 
+            label={`Unknown (${unknownSenders.length})`} 
+            icon={<PersonAdd sx={{ fontSize: 18 }} />}
+            iconPosition="start"
+          />
+        </Tabs>
+      </Box>
+
       {/* Content */}
       <Box sx={{ flex: 1, overflow: 'auto' }}>
-        {/* Groups Section */}
-        {groups.length > 0 && (
+        {/* Groups Tab Content */}
+        {activeTab === 0 && (
           <>
-            <Box sx={{ p: 2, pb: 1 }}>
-              <Typography variant="subtitle2" sx={{ color: '#8596a8', fontWeight: 500 }}>
-                GROUPS
-              </Typography>
-            </Box>
-            {Array.isArray(groups) &&
-              groups.map((group) => (
+            {filteredGroups.length === 0 ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Group sx={{ fontSize: 48, color: '#8596a8', mb: 2 }} />
+                <Typography variant="h6" sx={{ color: '#8596a8', mb: 1 }}>
+                  {searchText ? 'No groups found' : 'No groups yet'}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#8596a8' }}>
+                  {searchText ? 'Try a different search term' : 'Create your first group to get started'}
+                </Typography>
+              </Box>
+            ) : (
+              filteredGroups.map((group) => (
                 <Box
                   key={group.id}
                   onClick={() => navigateToGroup(group)}
@@ -377,192 +458,207 @@ const UserListScreen = () => {
                   </Box>
                 </Box>
               ))}
-            <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.05)', my: 1 }} />
+            )}
           </>
         )}
 
-        {/* Contacts Section */}
-        {filteredContacts.length > 0 && (
+        {/* Contacts Tab Content */}
+        {activeTab === 1 && (
           <>
-            <Box sx={{ p: 2, pb: 1 }}>
-              <Typography variant="subtitle2" sx={{ color: '#8596a8', fontWeight: 500 }}>
-                CONTACTS
-              </Typography>
-            </Box>
-            {filteredContacts.map((item) => (
-              <Box
-                key={item.contact}
-                onClick={() => navigateToChat(item)}
-                className="hover-bg"
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  p: 2,
-                  cursor: 'pointer',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                }}
-              >
-                <Badge
-                  overlap="circular"
-                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                  badgeContent={
-                    onlineUsers.includes(item.contact) ? (
-                      <Circle sx={{ color: '#4caf50', fontSize: 12 }} />
-                    ) : null
-                  }
+            {filteredContacts.length === 0 ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Person sx={{ fontSize: 48, color: '#8596a8', mb: 2 }} />
+                <Typography variant="h6" sx={{ color: '#8596a8', mb: 1 }}>
+                  {searchText ? 'No contacts found' : 'No contacts yet'}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#8596a8' }}>
+                  {searchText ? 'Try a different search term' : 'Add your first contact to start chatting'}
+                </Typography>
+              </Box>
+            ) : (
+              filteredContacts.map((item) => (
+                <Box
+                  key={item.contact}
+                  onClick={() => navigateToChat(item)}
+                  className="hover-bg"
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    p: 2,
+                    cursor: 'pointer',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                  }}
+                >
+                  <Badge
+                    overlap="circular"
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    badgeContent={
+                      onlineUsers.includes(item.contact) ? (
+                        <Circle sx={{ color: '#4caf50', fontSize: 12 }} />
+                      ) : null
+                    }
+                  >
+                    <Avatar
+                      sx={{
+                        width: 50,
+                        height: 50,
+                        mr: 2,
+                        background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                        fontSize: '18px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {getInitials(item.name)}
+                    </Avatar>
+                  </Badge>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        color: '#ffffff',
+                        fontWeight: 500,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {item.name || item.contact}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: onlineUsers.includes(item.contact) ? '#4caf50' : '#8596a8',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {onlineUsers.includes(item.contact) ? 'online' : 'last seen recently'}
+                    </Typography>
+                  </Box>
+                  <IconButton
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteContact(item.contact);
+                    }}
+                    sx={{ color: '#8596a8', opacity: 0.7 }}
+                  >
+                    <Delete fontSize="small" />
+                  </IconButton>
+                </Box>
+              ))
+            )}
+          </>
+        )}
+
+        {/* Unknown Contacts Tab Content */}
+        {activeTab === 2 && (
+          <>
+            {filteredUnknownSenders.length === 0 ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <PersonAdd sx={{ fontSize: 48, color: '#8596a8', mb: 2 }} />
+                <Typography variant="h6" sx={{ color: '#8596a8', mb: 1 }}>
+                  {searchText ? 'No unknown contacts found' : 'No unknown contacts'}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#8596a8' }}>
+                  {searchText ? 'Try a different search term' : 'Unknown contacts will appear here when they message you'}
+                </Typography>
+              </Box>
+            ) : (
+              filteredUnknownSenders.map((item) => (
+                <Box
+                  key={item}
+                  onClick={() => navigateToChat(item)}
+                  className="hover-bg"
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    p: 2,
+                    cursor: 'pointer',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
+                  }}
                 >
                   <Avatar
                     sx={{
                       width: 50,
                       height: 50,
                       mr: 2,
-                      background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                      background: '#8596a8',
                       fontSize: '18px',
                       fontWeight: 600,
                     }}
                   >
-                    {getInitials(item.name)}
+                    {getInitials(item)}
                   </Avatar>
-                </Badge>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      color: '#ffffff',
-                      fontWeight: 500,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {item.name || item.contact}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: onlineUsers.includes(item.contact) ? '#4caf50' : '#8596a8',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {onlineUsers.includes(item.contact) ? 'online' : 'last seen recently'}
-                  </Typography>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        color: '#ffffff',
+                        fontWeight: 500,
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      {item}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: '#8596a8',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      Unknown contact
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <IconButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleAddFromUnknownUser(item);
+                      }}
+                      sx={{ color: '#4caf50', opacity: 0.8 }}
+                    >
+                      <PersonAdd fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteUnknownSender(item);
+                      }}
+                      sx={{ color: '#f44336', opacity: 0.8 }}
+                    >
+                      <Delete fontSize="small" />
+                    </IconButton>
+                  </Box>
                 </Box>
-                <IconButton
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteContact(item.contact);
-                  }}
-                  sx={{ color: '#8596a8', opacity: 0.7 }}
-                >
-                  <Delete fontSize="small" />
-                </IconButton>
-              </Box>
-            ))}
-          </>
-        )}
-
-        {/* Unknown Senders */}
-        {unknownSenders.length > 0 && (
-          <>
-            <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.05)', my: 1 }} />
-            <Box sx={{ p: 2, pb: 1 }}>
-              <Typography variant="subtitle2" sx={{ color: '#8596a8', fontWeight: 500 }}>
-                UNKNOWN CONTACTS
-              </Typography>
-            </Box>
-            {unknownSenders.map((item) => (
-              <Box
-                key={item}
-                onClick={() => navigateToChat(item)}
-                className="hover-bg"
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  p: 2,
-                  cursor: 'pointer',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                }}
-              >
-                <Avatar
-                  sx={{
-                    width: 50,
-                    height: 50,
-                    mr: 2,
-                    background: '#8596a8',
-                    fontSize: '18px',
-                    fontWeight: 600,
-                  }}
-                >
-                  {getInitials(item)}
-                </Avatar>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      color: '#ffffff',
-                      fontWeight: 500,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {item}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: '#8596a8',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    Unknown contact
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <IconButton
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleAddFromUnknownUser(item);
-                    }}
-                    sx={{ color: '#4caf50', opacity: 0.8 }}
-                  >
-                    <PersonAdd fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteUnknownSender(item);
-                    }}
-                    sx={{ color: '#f44336', opacity: 0.8 }}
-                  >
-                    <Delete fontSize="small" />
-                  </IconButton>
-                </Box>
-              </Box>
-            ))}
+              ))
+            )}
           </>
         )}
       </Box>
 
       {/* Floating Action Buttons */}
-      <Box sx={{ position: 'fixed', top: 20, right: 20, display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <Fab
-          size="medium"
-          onClick={() => setCreateGroupOpen(true)}
-          sx={{
-            background: 'linear-gradient(135deg, #667eea, #764ba2)',
-            color: 'white',
-            '&:hover': {
-              background: 'linear-gradient(135deg, #764ba2, #667eea)',
-            },
-          }}
-        >
-          <Group />
-        </Fab>
+      <Box sx={{ position: 'fixed', bottom: 20, right: 20, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        {activeTab === 0 && (
+          <Fab
+            size="medium"
+            onClick={() => setCreateGroupOpen(true)}
+            sx={{
+              background: 'linear-gradient(135deg, #667eea, #764ba2)',
+              color: 'white',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #764ba2, #667eea)',
+              },
+            }}
+          >
+            <Group />
+          </Fab>
+        )}
         <Fab
           onClick={() => setAddContactOpen(true)}
           sx={{
