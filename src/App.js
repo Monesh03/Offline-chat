@@ -1,5 +1,6 @@
 // src/App.js
 import React from 'react';
+import './App.css'
 import { Routes, Route } from 'react-router-dom';
 import LoginScreen from './screens/Loginscreen';
 import UserListScreen from './screens/UserListScreen';
