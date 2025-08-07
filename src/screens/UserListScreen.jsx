@@ -714,10 +714,10 @@ const UserListScreen = () => {
       </Box>
 
       {/* Floating Action Buttons */}
-      <Box sx={{ position: 'fixed', top: 10, right: 20, display: 'flex', flexDirection: 'row', gap: 1 }}>
+      <Box sx={{ position: 'fixed', top: 15, right: 70, display: 'flex', flexDirection: 'row', gap: 1 }}>
         {activeTab === 0 && (
           <Fab
-            size="medium"
+            size="small"
             onClick={() => setCreateGroupOpen(true)}
             sx={{
               background: 'linear-gradient(135deg, #667eea, #764ba2)',
@@ -731,7 +731,7 @@ const UserListScreen = () => {
           </Fab>
         )}
         <Fab
-          size="medium"
+          size="small"
           onClick={() => setAddContactOpen(true)}
           sx={{
             background: 'linear-gradient(135deg, #40a7e3, #0088cc)',
