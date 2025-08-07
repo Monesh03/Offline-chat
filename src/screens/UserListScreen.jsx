@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, TextField, Typography, Button, Snackbar, Paper, Avatar,
   IconButton, Divider, Badge, Fab, Dialog, DialogTitle, DialogContent,
-  DialogActions, InputAdornment, Tabs, Tab
+  DialogActions, InputAdornment, Tabs, Tab, Menu, MenuItem, ListItemIcon
 } from '@mui/material';
 import { 
   Add, Search, Group, Person, Delete, PersonAdd, 
-  Circle, Settings, Menu as MenuIcon 
+  Circle, Settings, Menu as MenuIcon, Logout, AccountCircle
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
@@ -31,6 +31,8 @@ const UserListScreen = () => {
   const [newGroupName, setNewGroupName] = useState('');
   const [addContactOpen, setAddContactOpen] = useState(false);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
+  const [settingsAnchorEl, setSettingsAnchorEl] = useState(null);
+  const [userInfo, setUserInfo] = useState({ name: '', identifier: '' });
   const [activeTab, setActiveTab] = useState(0); // 0: Groups, 1: Contacts, 2: Unknown Contacts
 
   const navigate = useNavigate();
@@ -41,8 +43,10 @@ const UserListScreen = () => {
       try {
         const parsed = JSON.parse(stored);
         const identifier = parsed?.identifier;
+        const name = parsed?.name;
         if (identifier) {
           setCurrentUser(identifier);
+          setUserInfo({ name: name || '', identifier });
           fetchContacts(identifier);
           fetchUnknownSenders(identifier);
           fetchGroups(identifier);
@@ -272,6 +276,15 @@ const UserListScreen = () => {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    if (socket) {
+      socket.disconnect();
+    }
+    navigate('/');
+  };
+
   const getInitials = (name) => {
     return name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : '?';
   };
@@ -303,7 +316,65 @@ const UserListScreen = () => {
             Messager
           </Typography>
         </Box>
-       
+        <IconButton
+          onClick={(e) => setSettingsAnchorEl(e.currentTarget)}
+          sx={{ color: '#8596a8' }}
+        >
+          <Settings />
+        </IconButton>
+        <Menu
+          anchorEl={settingsAnchorEl}
+          open={Boolean(settingsAnchorEl)}
+          onClose={() => setSettingsAnchorEl(null)}
+          PaperProps={{
+            sx: {
+              background: '#242f3d',
+              color: '#ffffff',
+              borderRadius: 2,
+              minWidth: 250,
+            }
+          }}
+        >
+          <Box sx={{ p: 2, borderBottom: '1px solid rgba(255, 255, 255, 0.1)' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <Avatar
+                sx={{
+                  width: 40,
+                  height: 40,
+                  mr: 2,
+                  background: 'linear-gradient(135deg, #40a7e3, #0088cc)',
+                  fontSize: '16px',
+                  fontWeight: 600,
+                }}
+              >
+                {getInitials(userInfo.name)}
+              </Avatar>
+              <Box>
+                <Typography variant="body1" sx={{ fontWeight: 500, color: '#ffffff' }}>
+                  {userInfo.name || 'User'}
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#8596a8', fontSize: '12px' }}>
+                  {userInfo.identifier}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+          <MenuItem
+            onClick={() => {
+              handleLogout();
+              setSettingsAnchorEl(null);
+            }}
+            sx={{ 
+              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.08)' },
+              py: 1.5,
+            }}
+          >
+            <ListItemIcon>
+              <Logout sx={{ color: '#f44336', fontSize: 20 }} />
+            </ListItemIcon>
+            <Typography sx={{ color: '#f44336' }}>Logout</Typography>
+          </MenuItem>
+        </Menu>
       </Box>
 
       {/* Search */}
