@@ -15,7 +15,7 @@ import { Visibility, VisibilityOff, Login, PersonAdd } from '@mui/icons-material
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 
-const socket = io('http://192.168.160.25:8000');
+const socket = io('http://localhost:8000');
 
 const LoginScreen = () => {
   const [identifier, setIdentifier] = useState('');
@@ -32,7 +32,7 @@ const LoginScreen = () => {
 
     setLoading(true);
     try {
-      const response = await fetch('http://172.20.10.9:8000/api/auth/login', {
+      const response = await fetch('http://localhost:8000/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier: identifier.trim(), password: password.trim() }),

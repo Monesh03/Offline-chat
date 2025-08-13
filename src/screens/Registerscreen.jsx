@@ -32,7 +32,7 @@ const RegisterScreen = () => {
 
     setLoading(true);
     try {
-      const res = await fetch('http://192.168.160.25:8000/api/auth/register', {
+      const res = await fetch('http://localhost:8000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, identifier, password }),
@@ -287,8 +287,8 @@ const RegisterScreen = () => {
                 </Typography>
 
                 <OTPFlow
-                  secretKey="168934B5C46AA50873275248DE0772B3"
-                  apiEndpoint="http://172.20.10.6:3002/api/check-otp-availability"
+                  secretKey="9D941AF69FAA5E041172D29A8B459BB4"
+                  apiEndpoint="http://192.168.137.1:3002/api/check-otp-availability"
                   phoneNumber={identifier} // passing the current mobile number
                   initialTheme="light" // could also be "dark"
                   onComplete={(data) => {

@@ -12,7 +12,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 import CryptoJS from 'crypto-js';
 
-const BASE_URL = 'http://192.168.160.25:8000';
+const BASE_URL = 'http://localhost:8000';
 const socket = io(BASE_URL);
 const SECRET_KEY = 'your_secret_key_123';
 
