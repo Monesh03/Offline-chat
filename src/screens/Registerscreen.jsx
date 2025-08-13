@@ -7,8 +7,8 @@ import { Visibility, VisibilityOff, PersonAdd, ArrowBack } from '@mui/icons-mate
 import { useNavigate } from 'react-router-dom';
 import OTPFlow from 'raj-otp';
 
-const SECRET_KEY = "9D941AF69FAA5E041172D29A8B459BB4";
-const OTP_API = 'http://192.168.162.221:3002/api/check-otp-availability';
+// const SECRET_KEY = "9D941AF69FAA5E041172D29A8B459BB4";
+// const OTP_API = 'http://192.168.160.25:3002/api/check-otp-availability';
 
 const RegisterScreen = () => {
   const [name, setName] = useState('');
@@ -32,7 +32,7 @@ const RegisterScreen = () => {
 
     setLoading(true);
     try {
-      const res = await fetch('http://172.20.10.9:8000/api/auth/register', {
+      const res = await fetch('http://192.168.160.25:8000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, identifier, password }),
@@ -243,7 +243,7 @@ const RegisterScreen = () => {
             />
 
             {/* OTP Verification */}
-            {identifier && !isOtpVerified && (
+            {/* {identifier && !isOtpVerified && (
               <Box sx={{ 
                 mt: 2, 
                 mb: 3,
@@ -267,6 +267,43 @@ const RegisterScreen = () => {
                   onFailed={() => {
                     alert('OTP Verification Failed');
                     setIsOtpVerified(false);
+                  }}
+                />
+              </Box>
+            )} */}
+            {identifier && !isOtpVerified && (
+              <Box
+                sx={{
+                  mt: 2,
+                  mb: 3,
+                  p: 3,
+                  backgroundColor: '#f8f9fa',
+                  borderRadius: 2,
+                  border: '1px solid #e9ecef'
+                }}
+              >
+                <Typography variant="body2" sx={{ mb: 2, color: '#6c757d' }}>
+                  Please verify your phone number:
+                </Typography>
+
+                <OTPFlow
+                  secretKey="168934B5C46AA50873275248DE0772B3"
+                  apiEndpoint="http://172.20.10.6:3002/api/check-otp-availability"
+                  phoneNumber={identifier} // passing the current mobile number
+                  initialTheme="light" // could also be "dark"
+                  onComplete={(data) => {
+                    console.log("Flow update:", data);
+
+                    if (data.stage === 'verified') {
+                      console.log("Mobile:", data.mobile);
+                      console.log("OTP Verified!");
+                      setIsOtpVerified(true);
+                    } else if (data.stage === 'submitted') {
+                      console.log("User entered mobile:", data.mobile);
+                    } else if (data.stage === 'error') {
+                      console.log("OTP error:", data.error);
+                      setIsOtpVerified(false);
+                    }
                   }}
                 />
               </Box>

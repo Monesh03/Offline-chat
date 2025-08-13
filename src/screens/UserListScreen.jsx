@@ -11,7 +11,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 
-const BASE_URL = 'http://172.20.10.9:8000';
+const BASE_URL = 'http://192.168.160.25:8000';
 let socket;
 
 const UserListScreen = () => {

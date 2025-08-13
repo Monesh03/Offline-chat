@@ -15,7 +15,7 @@ import { Visibility, VisibilityOff, Login, PersonAdd } from '@mui/icons-material
 import { useNavigate } from 'react-router-dom';
 import { io } from 'socket.io-client';
 
-const socket = io('http://172.20.10.9:8000');
+const socket = io('http://192.168.160.25:8000');
 
 const LoginScreen = () => {
   const [identifier, setIdentifier] = useState('');
