@@ -17,6 +17,7 @@ const RegisterScreen = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isOtpVerified, setIsOtpVerified] = useState(false);
+  const [showOtpFlow, setShowOtpFlow] = useState(false);
   const navigate = useNavigate();
 
   const handleRegister = async () => {
@@ -176,32 +177,24 @@ const RegisterScreen = () => {
               }}
             />
             
-            <TextField
-              fullWidth
-              label="Phone or Email"
-              value={identifier}
-              onChange={e => setIdentifier(e.target.value)}
-              variant="outlined"
-              className="telegram-input"
-              sx={{
-                mb: 2.5,
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 2,
-                  backgroundColor: '#f8f9fa',
-                  '& fieldset': {
-                    borderColor: '#e9ecef',
-                    borderWidth: 1,
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#40a7e3',
-                  },
-                },
-                '& .MuiInputLabel-root': {
-                  color: '#6c757d',
-                },
-              }}
-            />
-            
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+  <TextField
+    fullWidth
+    label="Phone or Email"
+    value={identifier}
+    onChange={e => setIdentifier(e.target.value)}
+    variant="outlined"
+  />
+  <Button
+    variant="contained"
+    onClick={() => setShowOtpFlow(true)}
+    disabled={!identifier}
+    sx={{ height: 56 }}
+  >
+    Verify
+  </Button>
+</Box>
+
             <TextField
               fullWidth
               label="Password"
@@ -271,43 +264,18 @@ const RegisterScreen = () => {
                 />
               </Box>
             )} */}
-            {identifier && !isOtpVerified && (
-              <Box
-                sx={{
-                  mt: 2,
-                  mb: 3,
-                  p: 3,
-                  backgroundColor: '#f8f9fa',
-                  borderRadius: 2,
-                  border: '1px solid #e9ecef'
-                }}
-              >
-                <Typography variant="body2" sx={{ mb: 2, color: '#6c757d' }}>
-                  Please verify your phone number:
-                </Typography>
-
-                <OTPFlow
-                  secretKey="9D941AF69FAA5E041172D29A8B459BB4"
-                  apiEndpoint="http://192.168.137.1:3002/api/check-otp-availability"
-                  phoneNumber={identifier} // passing the current mobile number
-                  initialTheme="light" // could also be "dark"
-                  onComplete={(data) => {
-                    console.log("Flow update:", data);
-
-                    if (data.stage === 'verified') {
-                      console.log("Mobile:", data.mobile);
-                      console.log("OTP Verified!");
-                      setIsOtpVerified(true);
-                    } else if (data.stage === 'submitted') {
-                      console.log("User entered mobile:", data.mobile);
-                    } else if (data.stage === 'error') {
-                      console.log("OTP error:", data.error);
-                      setIsOtpVerified(false);
-                    }
-                  }}
-                />
-              </Box>
-            )}
+            {showOtpFlow && !isOtpVerified && (
+  <OTPFlow
+    secretKey="9D941AF69FAA5E041172D29A8B459BB4"
+    apiEndpoint="http://192.168.137.1:3002/api/check-otp-availability"
+    phoneNumber={identifier}
+    initialTheme="light"
+    onComplete={(data) => {
+      if (data.stage === 'verified') setIsOtpVerified(true);
+      else if (data.stage === 'error') setIsOtpVerified(false);
+    }}
+  />
+)}
 
             <Button
               variant="contained"
