@@ -7,6 +7,7 @@ import UserListScreen from './screens/UserListScreen';
 import PrivateChatScreen from './screens/PrivateChatScreen';
 import Registerscreen from './screens/Registerscreen';
 import GroupChatScreen from './screens/groupChatscreen';
+import Dashboard from './Dashboard';
 const App = () => {
   return (
     <Routes>
@@ -15,6 +16,7 @@ const App = () => {
       <Route path="/userlist" element={<UserListScreen />} />
       <Route path="/privatechat" element={<PrivateChatScreen />} />
       <Route path="/groupchat" element={<GroupChatScreen />} />
+      <Route path="/dashboard" element={<Dashboard />} />
     </Routes>
   );
 };
