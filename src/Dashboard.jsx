@@ -62,60 +62,62 @@ const Dashboard = () => {
       </h2>
 
       {/* Performance Stats */}
-      <div
-        style={{
-          background: "#ffffff",
-          borderRadius: "12px",
-          padding: "20px",
-          marginBottom: "30px",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-        }}
-      >
-        <h3 style={{ marginBottom: "15px", color: "#007bff" }}>
-           Performance Load
-        </h3>
-        <div style={{ overflowX: "auto" }}>
-          <table
+<div
+  style={{
+    background: "#ffffff",
+    borderRadius: "12px",
+    padding: "20px",
+    marginBottom: "30px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+  }}
+>
+  <h3 style={{ marginBottom: "15px", color: "#007bff" }}>
+     Performance Load
+  </h3>
+  <div style={{ overflowX: "auto" }}>
+    <table
+      style={{
+        width: "100%",
+        borderCollapse: "collapse",
+        borderRadius: "10px",
+        overflow: "hidden",
+      }}
+    >
+      <thead style={{ background: "#007bff", color: "white" }}>
+        <tr>
+          <th style={{ padding: "12px" }}>Endpoint</th>
+          <th style={{ padding: "12px" }}>Method</th>
+          <th style={{ padding: "12px" }}>Status</th> {/* ✅ New */}
+          <th style={{ padding: "12px" }}>Avg Response Time (ms)</th>
+          <th style={{ padding: "12px" }}>Total Requests</th>
+        </tr>
+      </thead>
+      <tbody>
+        {performanceStats.map((stat, idx) => (
+          <tr
+            key={idx}
             style={{
-              width: "100%",
-              borderCollapse: "collapse",
-              borderRadius: "10px",
-              overflow: "hidden",
+              background: idx % 2 === 0 ? "#f1f5ff" : "#fff",
+              textAlign: "center",
+              transition: "background 0.3s",
             }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = "#e6f0ff")}
+            onMouseLeave={(e) =>
+              (e.currentTarget.style.background =
+                idx % 2 === 0 ? "#f1f5ff" : "#fff")
+            }
           >
-            <thead style={{ background: "#007bff", color: "white" }}>
-              <tr>
-                <th style={{ padding: "12px" }}>Endpoint</th>
-                <th style={{ padding: "12px" }}>Method</th>
-                <th style={{ padding: "12px" }}>Avg Response Time (ms)</th>
-                <th style={{ padding: "12px" }}>Total Requests</th>
-              </tr>
-            </thead>
-            <tbody>
-              {performanceStats.map((stat, idx) => (
-                <tr
-                  key={idx}
-                  style={{
-                    background: idx % 2 === 0 ? "#f1f5ff" : "#fff",
-                    textAlign: "center",
-                    transition: "background 0.3s",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "#e6f0ff")}
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.background =
-                      idx % 2 === 0 ? "#f1f5ff" : "#fff")
-                  }
-                >
-                  <td style={{ padding: "10px" }}>{stat.endpoint}</td>
-                  <td style={{ padding: "10px" }}>{stat.method}</td>
-                  <td style={{ padding: "10px" }}>{stat.avg_response_time}</td>
-                  <td style={{ padding: "10px" }}>{stat.total_requests}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            <td style={{ padding: "10px" }}>{stat.endpoint}</td>
+            <td style={{ padding: "10px" }}>{stat.method}</td>
+            <td style={{ padding: "10px" }}>{stat.status}</td> {/* ✅ New */}
+            <td style={{ padding: "10px" }}>{stat.avg_response_time}</td>
+            <td style={{ padding: "10px" }}>{stat.total_requests}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
 
       {/* Tracing Logs */}
       <div
