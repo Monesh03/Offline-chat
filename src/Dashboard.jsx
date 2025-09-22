@@ -23,9 +23,9 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const logs = await axios.get("http://localhost:8000/api/request-logs");
+        const logs = await axios.get("http://192.168.169.248:8000/api/request-logs");
         const perf = await axios.get(
-          "http://localhost:8000/api/performance-stats"
+          "http://192.168.169.248:8000/api/performance-stats"
         );
 
         setTracingLogs(logs.data);

@@ -2,7 +2,7 @@
 import { io } from 'socket.io-client';
 
 // ✅ Replace with your backend server URL or IP address
-const SOCKET_SERVER_URL = "http://192.168.166.94:8000"; // or http://localhost:8000 during development
+const SOCKET_SERVER_URL = "http://192.168.169.248:8000"; // or http://localhost:8000 during development
 
 export const socket = io(SOCKET_SERVER_URL, {
   transports: ['websocket'], // Works well for both web and mobile
